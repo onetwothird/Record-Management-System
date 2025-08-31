@@ -5,8 +5,8 @@
 
 /* Navbar CSS Variables - Green Theme */
 :root {
-    --navbar-poppins: 'Poppins', sans-serif;
-    --navbar-lato: 'Lato', sans-serif;
+    --navbar-poppins: 'Poppins';
+    /* --navbar-lato: 'Lato', sans-serif; */
     --navbar-background: #04500f; /* Green background */
     --navbar-light: #ffffff; /* White text and elements */
     --navbar-green: #ffffff; /* White for contrast */
@@ -34,7 +34,7 @@ body.dark {
     display: flex;
     align-items: center;
     grid-gap: 24px;
-    font-family: var(--navbar-lato);
+    font-family: var(--navbar-poppins);
     position: sticky;
     top: 0;
     left: 0;
