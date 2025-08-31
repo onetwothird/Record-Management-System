@@ -1,0 +1,317 @@
+<?php
+require_once '../../includes/config.php';
+
+// Default profile image path
+$defaultProfileImage = '../../img/default-avatar.png';
+
+// Get user ID from session
+$userId = $_SESSION['user_id'] ?? null;
+
+// Initialize profile image and name variables
+$profileImage = $defaultProfileImage;
+$userName = 'Profile';
+$userRole = 'Super Admin';
+
+// Fetch user data from database if logged in
+if ($userId) {
+    try {
+        $stmt = $pdo->prepare("SELECT profile_image, name, mi, surname, role FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($user) {
+            // Construct full name
+            $fullName = trim($user['name'] . ' ' . (!empty($user['mi']) ? $user['mi'] . '. ' : '') . $user['surname']);
+            $userName = htmlspecialchars($fullName);
+            
+            // Set user role if available
+            if (!empty($user['role'])) {
+                $userRole = htmlspecialchars($user['role']);
+            }
+            
+            // Set profile image if exists in database
+            if (!empty($user['profile_image'])) {
+                $dbImagePath = $user['profile_image'];
+                $webImagePath = '../../' . ltrim($dbImagePath, '/');
+                $fileSystemPath = '../../' . ltrim($dbImagePath, '/');
+                
+                if (file_exists($fileSystemPath)) {
+                    $profileImage = $webImagePath . '?v=' . filemtime($fileSystemPath);
+                } else {
+                    error_log("Profile image not found at: " . $fileSystemPath);
+                }
+            }
+        }
+    } catch (PDOException $e) {
+        error_log("Database error fetching profile: " . $e->getMessage());
+    }
+}
+?>
+
+<link rel="stylesheet" href="../assets/css/components/navbar.css">
+<link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+<nav class="superadmin-navbar">
+    <div class="nav-left">
+        <i class='bx bx-menu toggle-sidebar'></i>
+    </div>
+
+    <div class="nav-right">
+        <div class="system-status">
+            <i class='bx bx-server'></i>
+            <span class="status-indicator online"></span>
+        </div>
+        
+        <div class="admin-quick-access">
+            <a href="../superadmin/dashboard.php" class="quick-link" title="Dashboard">
+                <i class='bx bx-home'></i>
+            </a>
+            <a href="../superadmin/system_settings.php" class="quick-link" title="System Settings">
+                <i class='bx bx-cog'></i>
+            </a>
+        </div>
+
+        <div class="profile-section">
+            <div class="profile-info">
+                <span class="admin-name"><?php echo $userName; ?></span>
+                <span class="admin-role"><?php echo $userRole; ?></span>
+            </div>
+            
+            <a href="../superadmin/profile.php" class="profile-image">
+                <img src="<?php echo htmlspecialchars($profileImage); ?>" alt="<?php echo $userName; ?>">
+            </a>
+            
+            <div class="profile-dropdown">
+                <div class="dropdown-item">
+                    <i class='bx bx-user'></i>
+                    <a href="../superadmin/profile.php">My Profile</a>
+                </div>
+                <div class="dropdown-item">
+                    <i class='bx bx-cog'></i>
+                    <a href="../superadmin/settings.php">System Settings</a>
+                </div>
+                <div class="dropdown-item">
+                    <i class='bx bx-shield'></i>
+                    <a href="../superadmin/users.php">Admin Management</a>
+                </div>
+                <div class="dropdown-divider"></div>
+                <div class="dropdown-item">
+                    <i class='bx bx-log-out'></i>
+                    <a href="../../logout.php">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<style>
+.superadmin-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    height: 70px;
+    background: linear-gradient(90deg, #1a202c, #2d3748);
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.toggle-sidebar {
+    font-size: 24px;
+    cursor: pointer;
+    color: #cbd5e0;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 8px 15px;
+}
+
+.search-box input {
+    border: none;
+    background: transparent;
+    outline: none;
+    margin-left: 8px;
+    width: 200px;
+    color: white;
+}
+
+.search-box input::placeholder {
+    color: #cbd5e0;
+}
+
+.nav-center {
+    display: flex;
+    align-items: center;
+}
+
+.superadmin-badge {
+    background: #e53e3e;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.system-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 20px;
+    color: #cbd5e0;
+    position: relative;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+}
+
+.status-indicator.online {
+    background: #48bb78;
+    box-shadow: 0 0 0 2px #2d3748;
+}
+
+.admin-notifications {
+    position: relative;
+    cursor: pointer;
+    font-size: 20px;
+    color: #cbd5e0;
+}
+
+.notification-count {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #e53e3e;
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-quick-access {
+    display: flex;
+    gap: 15px;
+    border-right: 1px solid #4a5568;
+    padding-right: 20px;
+}
+
+.quick-link {
+    color: #cbd5e0;
+    font-size: 20px;
+    transition: color 0.3s;
+}
+
+.quick-link:hover {
+    color: white;
+}
+
+.profile-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    cursor: pointer;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.admin-name {
+    font-weight: 600;
+    color: white;
+}
+
+.admin-role {
+    font-size: 12px;
+    color: #cbd5e0;
+}
+
+.profile-image img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #4a5568;
+}
+
+.profile-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    width: 220px;
+    padding: 10px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    z-index: 1001;
+}
+
+.profile-section:hover .profile-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    color: #4a5568;
+    transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+    background: #f7fafc;
+}
+
+.dropdown-item i {
+    margin-right: 10px;
+    font-size: 18px;
+}
+
+.dropdown-item a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 5px 0;
+}
+</style>

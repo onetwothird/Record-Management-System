@@ -1,0 +1,102 @@
+@media (max-width: 1024px) {
+    .controls-container {
+        flex-direction: column;
+        gap: 24px;
+    }
+    
+    .period-controls-group,
+    .search-filter-group {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .filter-tabs-section {
+        flex-direction: column;
+        gap: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .period-controls-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .period-control select,
+    .period-info {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .search-filter-group {
+        min-width: auto;
+    }
+    
+    .filter-controls {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .filter-select {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .filter-tabs {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .filter-tab {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .period-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .period-control {
+        width: 100%;
+    }
+    
+    .period-control select {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    .semester-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-overview {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+    
+    .categories-grid,
+    .pending-grid,
+    .completed-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .progress-overview {
+        flex-direction: column;
+        gap: 24px;
+    }
+    
+    .activity-details {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .filter-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .search-box {
+        min-width: auto;
+    }
+}

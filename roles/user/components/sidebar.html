@@ -1,0 +1,161 @@
+<?php
+$current_page = basename($_SERVER['PHP_SELF']);
+?>
+
+<!-- Sidebar -->
+<section id="sidebar">
+    <div class="sidebar-header">
+        <a href="#" class="brand">
+            <img src="../../img/cvsu-logo.png" alt="Logo" style="width: 40px; height: 40px; margin-left: 15px; margin-right: 15;">
+            <span class="text" style="margin-left: 15px;">ODCI</span>
+        </a>
+    </div>
+
+    <ul class="side-menu top">
+        <li class="<?= $current_page == 'social_feed.php' ? 'active' : '' ?>">
+            <a href="social_feed.php">
+                <i class='bx bx-news'></i>
+                <span class="text">Social Feed</span>
+            </a>
+            <div class="tooltip">Social Feed</div>
+        </li>
+        <li class="<?= $current_page == 'dashboard.php' ? 'active' : '' ?>">
+            <a href="dashboard.php">
+                <i class='bx bxs-dashboard'></i>
+                <span class="text">Dashboard</span>
+            </a>
+            <div class="tooltip">Dashboard</div>
+        </li>
+        <li class="<?= $current_page == 'folders.php' ? 'active' : '' ?>">
+            <a href="folders.php">
+                <i class='bx bxs-folder'></i>
+                <span class="text">Department Folders</span>
+            </a>
+            <div class="tooltip">Department Folders</div>
+        </li>
+        <li class="<?= $current_page == 'submission_tracker.php' ? 'active' : '' ?>">
+            <a href="submission_tracker.php">
+                <i class='bx bxs-check-square'></i>
+                <span class="text">My Tracker</span>
+            </a>
+            <div class="tooltip">My Tracker</div>
+        </li>
+        <li class="<?= $current_page == 'reports.php' ? 'active' : '' ?>">
+            <a href="reports.php">
+                <i class='bx bxs-report'></i>
+                <span class="text">Reports</span>
+            </a>
+            <div class="tooltip">Reports</div>
+        </li>
+    </ul>
+    
+    <ul class="side-menu">
+        <li class="<?= $current_page == 'settings.php' ? 'active' : '' ?>">
+            <a href="settings.php">
+                <i class='bx bxs-cog'></i>
+                <span class="text">Settings</span>
+            </a>
+            <div class="tooltip">Settings</div>
+        </li>
+        <li>
+            <a href="../../logout.php" class="logout">
+                <i class='bx bxs-log-out-circle'></i>
+                <span class="text">Logout</span>
+            </a>
+            <div class="tooltip">Logout</div>
+        </li>
+    </ul>
+</section>
+
+<script>
+// Sidebar functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.getElementById('sidebar');
+    const content = document.getElementById('content');
+    
+    // Toggle sidebar on hover for better UX
+    let hoverTimer;
+    
+    sidebar.addEventListener('mouseenter', function() {
+        clearTimeout(hoverTimer);
+        if (window.innerWidth > 768) {
+            sidebar.classList.add('expanded');
+            if (content) {
+                content.classList.add('sidebar-expanded');
+            }
+        }
+    });
+    
+    sidebar.addEventListener('mouseleave', function() {
+        hoverTimer = setTimeout(() => {
+            if (window.innerWidth > 768) {
+                sidebar.classList.remove('expanded');
+                if (content) {
+                    content.classList.remove('sidebar-expanded');
+                }
+            }
+        }, 300);
+    });
+    
+    // Mobile sidebar handling
+    function handleMobileView() {
+        if (window.innerWidth <= 768) {
+            sidebar.classList.remove('expanded');
+            if (content) {
+                content.classList.remove('sidebar-expanded');
+            }
+        }
+    }
+    
+    // Initial call and resize listener
+    handleMobileView();
+    window.addEventListener('resize', handleMobileView);
+    
+    // Tooltip functionality
+    const menuItems = document.querySelectorAll('#sidebar .side-menu li');
+    
+    menuItems.forEach(item => {
+        const tooltip = item.querySelector('.tooltip');
+        const link = item.querySelector('a');
+        
+        if (tooltip && link) {
+            link.addEventListener('mouseenter', function(e) {
+                if (!sidebar.classList.contains('expanded') && window.innerWidth > 768) {
+                    const rect = link.getBoundingClientRect();
+                    tooltip.style.left = (rect.right + 10) + 'px';
+                    tooltip.style.top = (rect.top + rect.height / 2 - tooltip.offsetHeight / 2) + 'px';
+                    tooltip.classList.add('show');
+                }
+            });
+            
+            link.addEventListener('mouseleave', function() {
+                tooltip.classList.remove('show');
+            });
+        }
+    });
+    
+    // Smooth page transitions (if needed)
+    const links = document.querySelectorAll('#sidebar .side-menu a:not(.logout)');
+    links.forEach(link => {
+        link.addEventListener('click', function(e) {
+            // Add any smooth transition effects here if needed
+            if (content) {
+                content.style.opacity = '0.8';
+                setTimeout(() => {
+                    content.style.opacity = '1';
+                }, 150);
+            }
+        });
+    });
+    
+    // Active state management
+    const currentPath = window.location.pathname;
+    const sidebarLinks = document.querySelectorAll('#sidebar .side-menu a');
+    
+    sidebarLinks.forEach(link => {
+        if (link.getAttribute('href') && currentPath.includes(link.getAttribute('href').split('/').pop())) {
+            link.parentElement.classList.add('active');
+        }
+    });
+});
+</script>

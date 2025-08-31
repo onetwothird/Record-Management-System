@@ -1,0 +1,86 @@
+<?php
+require_once '../../includes/config.php';
+
+// Default profile image path
+$defaultProfileImage = '../../img/default-avatar.png';
+
+// Get user ID from session
+$userId = $_SESSION['user_id'] ?? null;
+
+// Initialize profile image and name variables
+$profileImage = $defaultProfileImage;
+$userName = 'Profile';
+
+// Fetch user data from database if logged in
+if ($userId) {
+    try {
+        $stmt = $pdo->prepare("SELECT profile_image, name, mi, surname FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($user) {
+            // Construct full name
+            $fullName = trim($user['name'] . ' ' . (!empty($user['mi']) ? $user['mi'] . '. ' : '') . $user['surname']);
+            $userName = htmlspecialchars($fullName);
+            
+            // Set profile image if exists in database
+            if (!empty($user['profile_image'])) {
+                // Database stores relative path like: uploads/profile_images/profile_28_1755476391.png
+                $dbImagePath = $user['profile_image'];
+                
+                // For web display, we need to add the ../../ prefix to go up from current directory
+                $webImagePath = '../../' . ltrim($dbImagePath, '/');
+                
+                // For file_exists check, we need the actual file system path
+                // Assuming the script is in a subdirectory like admin/components/
+                // and uploads folder is in the root directory
+                $fileSystemPath = '../../' . ltrim($dbImagePath, '/');
+                
+                if (file_exists($fileSystemPath)) {
+                    // Add cache busting parameter using file modification time
+                    $profileImage = $webImagePath . '?v=' . filemtime($fileSystemPath);
+                } else {
+                    // Log missing file but don't show error to user
+                    error_log("Profile image not found at: " . $fileSystemPath);
+                    // Keep default image
+                }
+            }
+        }
+    } catch (PDOException $e) {
+        error_log("Database error fetching profile: " . $e->getMessage());
+    }
+}
+?>
+
+<nav>
+    <i class='bx bx-menu'></i>
+    <a href="#" class="nav-link" id="pageTitle">Dashboard</a>
+
+    <form action="#" id="navbarSearchForm">
+    </form>
+
+    <input type="checkbox" id="switch-mode" hidden>
+    <label for="switch-mode" class="switch-mode"></label>
+
+    <a href="#" class="notification">
+        <i class='bx bxs-bell'></i>
+        <span class="num">8</span>
+    </a>
+    <a href="#" class="profile" title="<?php echo htmlspecialchars(($currentUser['name'] ?? 'User') . ' ' . ($currentUser['surname'] ?? '') . (isset($departmentCode) && $departmentCode ? ' - ' . $departmentCode : '')); ?>">
+        <?php if (isset($departmentImage) && $departmentImage && file_exists($departmentImage)): ?>
+            <img src="<?php echo htmlspecialchars($departmentImage); ?>" alt="<?php echo htmlspecialchars((isset($departmentCode) ? $departmentCode : 'User') . ' Profile'); ?>" style="width: 36px; height: 36px;">
+        <?php else: ?>
+            <img src="<?php echo htmlspecialchars($profileImage); ?>" alt="<?php echo $userName; ?>" style="width: 36px; height: 36px;">
+        <?php endif; ?>
+    </a>
+
+    <!-- Profile Section -->
+    <div class="profile-dropdown">
+        <button class="profile-btn" aria-label="User profile menu" aria-expanded="false">
+
+            <span class="profile-name"><?php echo $userName; ?></span>
+        </button>
+    </div>
+    
+</nav>
+
