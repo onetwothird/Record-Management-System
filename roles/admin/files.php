@@ -101,7 +101,6 @@ $count_stmt->execute($params);
 $total_files = $count_stmt->fetch(PDO::FETCH_ASSOC)['total'];
 $total_pages = ceil($total_files / $limit);
 
-// Get files with enhanced details
 $files_query = "SELECT f.*, fo.folder_name, u.username, u.name as user_name, u.surname, u.employee_id,
                        u.position, u.profile_image, u.last_login,
                        d.department_name, d.department_code, d.head_of_department,
@@ -178,7 +177,6 @@ if ($admin_role !== 'super_admin') {
 }
 $users = $users_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Handle file actions with enhanced permissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     $file_id = $_POST['file_id'] ?? 0;
@@ -332,233 +330,942 @@ function timeAgo($datetime) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Admin Files - Management System</title>
+    <title>Admin Files - Management System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/sidebar.css?v=<?= time() ?>">
     <link rel="stylesheet" href="assets/css/navbar.css?v=<?= time() ?>">
-    <style>
-        .enhanced-files-container {
-            padding: 20px;
-            transition: margin-left 0.3s ease;
-            min-height: calc(100vh - 76px);
+ <style>
+        :root {
+            --poppins: 'Poppins';
+            
+            /* Modern Color Palette */
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+            --blue: #007bff;
+            --secondary-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --warning-orange: #f59e0b;
+            --danger-red: #ef4444;
+            --info-cyan: #06b6d4;
+            
+            /* Neutrals */
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
         }
-        
-        .enhanced-files-container.sidebar-collapsed {
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background:  #f5f7fa;
+            font-family: var(--poppins);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .files-container {
+            padding: 30px;
+            transition: all 0.3s ease;
+            min-height: calc(100vh - 76px);
+            margin: 0 auto;
+        }
+
+        .files-container.sidebar-collapsed {
             margin-left: 80px;
         }
-        
-        .stats-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        
-        .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 15px;
-            padding: 1.5rem;
+
+        /* Modern Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border-radius: 20px;
             color: white;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 35px;
+            margin-bottom: 35px;
             position: relative;
             overflow: hidden;
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3);
         }
-        
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .header .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .header h2 {
+            font-size: 32px;
+            font-weight: 800;
+            margin: 0 0 8px 0;
+        }
+
+        .header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .header-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 18px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
         .stat-card::before {
             content: '';
             position: absolute;
             top: 0;
+            left: 0;
             right: 0;
-            width: 100px;
-            height: 100px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 50%;
-            transform: translate(30px, -30px);
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
         }
-        
-        .stat-card.warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-        .stat-card.success { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-        .stat-card.info { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
-        .stat-card.dark { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        
+        .stat-card.dark::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--blue), var(--blue));
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+        }
+
+        .stat-card.success::before { background: linear-gradient(90deg, var(--success-color), #20c997); }
+        .stat-card.warning::before { background: linear-gradient(90deg, var(--warning-color), #fd7e14); }
+        .stat-card.info::before { background: linear-gradient(90deg, var(--info-color), #138496); }
+        .stat-card.danger::before { background: linear-gradient(90deg, var(--danger-color), #e74c3c); }
+
+
+        .stat-content {
+            position: relative;
+            z-index: 2;
+        }
+
         .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
+            font-size: 2.5rem;
+            font-weight: 800;
             margin-bottom: 0.5rem;
+            line-height: 1;
         }
-        
+
         .stat-label {
-            font-size: 0.875rem;
-            opacity: 0.9;
-            margin-bottom: 0;
+            font-size: 0.95rem;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            margin: 0;
         }
-        
+
         .stat-icon {
             position: absolute;
-            right: 1rem;
+            right: 20px;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 2.5rem;
-            opacity: 0.3;
+            font-size: 3rem;
+            opacity: 0.1;
+            color: var(--primary-color);
         }
-        
-        .enhanced-filter-card {
+
+        .filter-card {
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
             border: none;
-            margin-bottom: 2rem;
-        }
-        
-        .enhanced-files-table {
-            background: white;
-            border-radius: 15px;
+            margin-bottom: 30px;
             overflow: hidden;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
-            border: none;
         }
-        
-        .enhanced-files-table .table {
-            margin-bottom: 0;
+
+        .filter-card .card-body {
+            padding: 30px;
+            background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
         }
-        
-        .enhanced-files-table .table th {
-            background: #f8f9ff;
-            border-bottom: 1px solid #e3e6f0;
+
+        .form-label {
             font-weight: 600;
-            color: #5a5c69;
-            padding: 1rem;
+            color: #4a5568;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        
-        .enhanced-files-table .table td {
-            padding: 1rem;
+
+        .form-control, .form-select {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: #f8fafc;
+            font-weight: 500;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: white;
+        }
+
+        .input-group-text {
+            background: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            color: white;
+            border-radius: 12px 0 0 12px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .files-table {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.1);
+            border: none;
+            margin-bottom: 30px;
+        }
+
+        .table {
+            margin-bottom: 0;
+            font-family: var(--poppins);
+        }
+
+        .table th {
+            background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
+            border-bottom: 2px solid #e3e6f0;
+            font-weight: 700;
+            color: #2d3748;
+            padding: 20px;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .table td {
+            padding: 20px;
             vertical-align: middle;
-            border-bottom: 1px solid #e3e6f0;
+            border-bottom: 1px solid #f0f4f8;
+            transition: all 0.2s ease;
         }
-        
+
+        .table tbody tr:hover {
+            background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        /* File Item Enhancement */
         .file-item {
             display: flex;
             align-items: center;
             gap: 1rem;
         }
-        
-        .file-icon-enhanced {
-            width: 45px;
-            height: 45px;
-            border-radius: 10px;
+
+        .file-icon {
+            width: 55px;
+            height: 55px;
+            border-radius: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.25rem;
+            font-size: 1.5rem;
             color: white;
             flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
         }
-        
-        .file-icon-enhanced.pdf { background: linear-gradient(135deg, #ff6b6b, #ee5a52); }
-        .file-icon-enhanced.doc { background: linear-gradient(135deg, #4fc3f7, #29b6f6); }
-        .file-icon-enhanced.xls { background: linear-gradient(135deg, #66bb6a, #4caf50); }
-        .file-icon-enhanced.img { background: linear-gradient(135deg, #ab47bc, #9c27b0); }
-        .file-icon-enhanced.default { background: linear-gradient(135deg, #78909c, #607d8b); }
-        
+
+        .file-icon::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .file-icon.pdf { background: linear-gradient(135deg, #ff6b6b, #ee5a52); }
+        .file-icon.doc { background: linear-gradient(135deg, #4fc3f7, #29b6f6); }
+        .file-icon.xls { background: linear-gradient(135deg, #66bb6a, #4caf50); }
+        .file-icon.ppt { background: linear-gradient(135deg, #ffa726, #ff9800); }
+        .file-icon.img { background: linear-gradient(135deg, #ab47bc, #9c27b0); }
+        .file-icon.zip { background: linear-gradient(135deg, #8d6e63, #6d4c41); }
+        .file-icon.default { background: linear-gradient(135deg, #78909c, #607d8b); }
+
         .file-details h6 {
-            margin: 0 0 0.25rem 0;
-            color: #2d3436;
-            font-weight: 600;
+            margin: 0 0 0.5rem 0;
+            color: #2d3748;
+            font-weight: 700;
+            font-size: 1.1rem;
         }
-        
+
         .file-meta {
-            font-size: 0.875rem;
-            color: #636e72;
+            font-size: 0.85rem;
+            color: #718096;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
         }
-        
+
+        .file-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #f7fafc;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-weight: 500;
+        }
+
+        /* User Info Enhancement */
         .user-info {
             display: flex;
             align-items: center;
             gap: 0.75rem;
         }
-        
+
         .user-avatar {
-            width: 35px;
-            height: 35px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-weight: 600;
-            font-size: 0.875rem;
+            font-weight: 700;
+            font-size: 1rem;
+            border: 3px solid #e8ecf4;
+            position: relative;
         }
-        
+
+        .user-avatar::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--success-color);
+            border: 2px solid white;
+        }
+
         .user-details h6 {
-            margin: 0 0 0.125rem 0;
-            font-size: 0.875rem;
-            font-weight: 600;
+            margin: 0 0 0.25rem 0;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #2d3748;
         }
-        
+
         .user-details small {
-            color: #636e72;
-            font-size: 0.75rem;
+            color: #718096;
+            font-size: 0.8rem;
+            display: block;
+            line-height: 1.3;
         }
-        
-        .badge-enhanced {
-            padding: 0.5rem 0.75rem;
-            border-radius: 50px;
-            font-size: 0.75rem;
-            font-weight: 600;
+
+        .badge {
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
         }
-        
-        .badge-public { background: #d4edda; color: #155724; }
-        .badge-private { background: #f8d7da; color: #721c24; }
-        .badge-department { background: #e2e3f1; color: #383d41; }
-        
+
+        .badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: badge-shine 3s infinite;
+        }
+
+        @keyframes badge-shine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .badge-public { 
+            background: linear-gradient(135deg, #d4edda, #c3e6cb); 
+            color: #155724; 
+            border-color: rgba(21, 87, 36, 0.2);
+        }
+        .badge-private { 
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb); 
+            color: #721c24; 
+            border-color: rgba(114, 28, 36, 0.2);
+        }
+        .badge-department { 
+            background: linear-gradient(135deg, #e2e3f1, #d1d9ff); 
+            color: #383d41; 
+            border-color: rgba(56, 61, 65, 0.2);
+        }
+
         .action-buttons {
             display: flex;
-            gap: 0.5rem;
+            gap: 8px;
         }
-        
+
         .action-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
             border: none;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 1rem;
+            position: relative;
+            overflow: hidden;
         }
-        
-        .action-btn:hover { transform: translateY(-2px); }
-        .action-btn.download { background: #e3f2fd; color: #1976d2; }
-        .action-btn.toggle { background: #fff3e0; color: #f57c00; }
-        .action-btn.delete { background: #ffebee; color: #d32f2f; }
-        .action-btn.download:hover { background: #bbdefb; }
-        .action-btn.toggle:hover { background: #ffe0b2; }
-        .action-btn.delete:hover { background: #ffcdd2; }
-        
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+            transform: translate(-50%, -50%);
+        }
+
+        .action-btn:hover::before {
+            width: 100%;
+            height: 100%;
+        }
+
+        .action-btn:hover { 
+            transform: translateY(-4px) scale(1.1); 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .action-btn.download { 
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb); 
+            color: #1976d2; 
+        }
+        .action-btn.toggle { 
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2); 
+            color: #f57c00; 
+        }
+        .action-btn.delete { 
+            background: linear-gradient(135deg, #ffebee, #ffcdd2); 
+            color: #d32f2f; 
+        }
+
+        /* Empty State Enhancement */
         .empty-state {
             text-align: center;
-            padding: 3rem 2rem;
-            color: #636e72;
+            padding: 80px 40px;
+            color: #718096;
+            background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
+            border-radius: 20px;
         }
-        
+
         .empty-state i {
-            font-size: 4rem;
-            margin-bottom: 1rem;
+            font-size: 5rem;
+            margin-bottom: 2rem;
             opacity: 0.3;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-        
+
+        .empty-state h5 {
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 1rem;
+        }
+        .pagination-container {
+            margin-top: 32px;
+            padding: 24px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-100);
+        }
+
+        .pagination-info {
+            color: var(--gray-600);
+            font-weight: 500;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pagination-info i {
+            color: var(--primary-green);
+        }
+
+        .pagination {
+            margin-bottom: 0;
+        }
+
+        .pagination .page-link {
+            border: 2px solid var(--gray-200);
+            color: var(--gray-600);
+            padding: 14px 18px;
+            margin: 0 6px;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 14px;
+            min-width: 48px;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            background: var(--gray-50);
+            text-decoration: none;
+        }
+
+        .pagination .page-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .pagination .page-link:hover::before {
+            left: 100%;
+        }
+
+        .pagination .page-item.active .page-link {
+            background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-dark) 100%);
+            border-color: var(--primary-green);
+            color: var(--primary-green-dark);
+            transform: translateY(-3px) scale(1.05);
+            position: relative;
+            z-index: 2;
+        }
+
+        .pagination .page-item.active .page-link::before {
+            display: none;
+        }
+
+        .pagination .page-item.active .page-link::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, var(--primary-green-light), var(--primary-green), var(--primary-green-dark), var(--primary-green));
+            border-radius: 16px;
+            z-index: -1;
+            animation: borderGlow 2s linear infinite;
+        }
+
+        @keyframes borderGlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .pagination .page-link:hover:not(.active) {
+            background: linear-gradient(135deg, var(--primary-green-lightest) 0%, white 100%);
+            border-color: var(--primary-green-light);
+            color: var(--primary-green-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.2);
+        }
+
+        .pagination .page-item.disabled .page-link {
+            background: var(--gray-100);
+            border-color: var(--gray-200);
+            color: var(--gray-400);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .pagination .page-item.disabled .page-link:hover {
+            background: var(--gray-100);
+            border-color: var(--gray-200);
+            color: var(--gray-400);
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Navigation arrows styling */
+        .pagination .page-link i {
+            font-size: 12px;
+        }
+
+        /* Ellipsis styling */
+        .pagination .page-item.disabled .page-link {
+            border: none;
+            background: transparent;
+            color: var(--gray-400);
+            font-weight: 700;
+            font-size: 16px;
+            padding: 14px 8px;
+        }
+
+        /* First/Last page indicators */
+        .pagination .page-item:first-child .page-link,
+        .pagination .page-item:last-child .page-link {
+            background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-50) 100%);
+        }
+
+        .pagination .page-item:first-child .page-link:hover,
+        .pagination .page-item:last-child .page-link:hover {
+            background: linear-gradient(135deg, var(--primary-green-lightest) 0%, var(--primary-green-lightest) 100%);
+        }
+
+        /* Mobile pagination adjustments */
         @media (max-width: 768px) {
-            .enhanced-files-container {
+            .pagination-container {
+                padding: 20px 16px;
+            }
+            
+            .pagination .page-link {
+                padding: 12px 14px;
+                margin: 0 3px;
+                min-width: 40px;
+                font-size: 13px;
+            }
+            
+            .pagination-info {
+                font-size: 13px;
+                text-align: center;
+                margin-bottom: 16px;
+            }
+            
+            .pagination-container .d-flex {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .pagination {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 576px) {
+            /* Hide some page numbers on very small screens */
+            .pagination .page-item:not(.active):not(:first-child):not(:last-child):not(.disabled) {
+                display: none;
+            }
+            
+            .pagination .page-item.active ~ .page-item:not(:last-child):not(.disabled),
+            .pagination .page-item.active + .page-item,
+            .pagination .page-item:has(+ .page-item.active) {
+                display: inline-block;
+            }
+        }
+
+        /* Quick Actions Panel */
+        .quick-actions .card {
+            border: 1px solid var(--gray-100);
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            transition: all 0.2s ease;
+        }
+
+        .quick-actions .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .quick-actions .card-body {
+            padding: 24px;
+        }
+
+        .quick-actions .card-title {
+            font-weight: 700;
+            color: var(--gray-800);
+            font-size: 14px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-outline-primary, .btn-outline-secondary {
+            border: 2px solid;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline-primary {
+            border-color: var(--primary-green);
+            color: var(--primary-green);
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--primary-green);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.2);
+        }
+
+        .btn-outline-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Alerts */
+        .alert {
+            border: none;
+            border-radius: 16px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            font-weight: 500;
+            box-shadow: var(--shadow-md);
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, var(--primary-green-lightest), #ffffff);
+            color: var(--primary-green-dark);
+            border-left-color: var(--primary-green);
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #fef2f2, #ffffff);
+            color: var(--danger-red);
+            border-left-color: var(--danger-red);
+        }
+
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .files-container {
                 margin-left: 0;
+                padding: 20px;
+            }
+            
+            .stats-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .header .header-content {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .files-container {
                 padding: 15px;
             }
             
             .stats-cards {
                 grid-template-columns: 1fr;
             }
+            
+            .header {
+                padding: 25px 20px;
+            }
+            
+            .header h2 {
+                font-size: 24px;
+            }
+            
+            .file-item {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .file-meta {
+                justify-content: center;
+                gap: 8px;
+            }
+            
+            .file-meta span {
+                font-size: 0.75rem;
+                padding: 3px 8px;
+            }
+            
+            .user-info {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .action-buttons {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .table-responsive {
+                border-radius: 20px;
+                overflow: hidden;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .filter-card .row {
+                gap: 15px;
+            }
+
+            .filter-card .col-lg-3,
+            .filter-card .col-lg-2,
+            .filter-card .col-lg-1 {
+                width: 100%;
+                max-width: none;
+            }
+            
+            .quick-actions-panel .row {
+                gap: 20px;
+            }
+        }
+
+        /* Loading Animation */
+        .loading-skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Notification Enhancement */
+        .notification {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            z-index: 1001;
+            padding: 20px 25px;
+            border-radius: 15px;
+            font-weight: 600;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            transform: translateX(400px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(10px);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, rgba(212, 237, 218, 0.9), rgba(195, 230, 203, 0.9));
+            color: #155724;
+            border-left: 5px solid #28a745;
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, rgba(248, 215, 218, 0.9), rgba(245, 198, 203, 0.9));
+            color: #721c24;
+            border-left: 5px solid #dc3545;
         }
     </style>
 </head>
@@ -571,48 +1278,48 @@ function timeAgo($datetime) {
         <!-- Navbar Component -->
         <?php include 'components/navbar.html'; ?>
     
-        <div class="enhanced-files-container" id="files-container">
+        <div class="files-container" id="files-container">
             <!-- Header -->
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h2 class="mb-1">
-                        <i class="fas fa-files me-2"></i>Enhanced File Management
+                        <i class="fas fa-files me-2"></i>File Management
                     </h2>
                     <p class="text-muted mb-0">
                         <?php echo $admin_role === 'super_admin' ? 'System-wide file overview' : 'Department files under your supervision'; ?>
                     </p>
                 </div>
-                <div class="badge badge-enhanced badge-department fs-6">
+                <div class="badge badge badge-department fs-6">
                     <?php echo number_format($total_files); ?> total files
                 </div>
             </div>
 
             <!-- Statistics Cards -->
             <div class="stats-cards">
-                <div class="stat-card">
+                <div class="stat-card" style="color: #ae9cc0ff;">
                     <div class="stat-value"><?php echo number_format($stats['total_files']); ?></div>
-                    <div class="stat-label">Total Files</div>
-                    <i class="fas fa-file-alt stat-icon"></i>
+                    <div class="stat-label" style = "color: #764ba2;">Total Files</div>
+                    <i class="fas fa-file-alt stat-icon" style="color: #764ba2;"></i>
                 </div>
-                <div class="stat-card success">
+                <div class="stat-card success" style="color: #b1d3b9ff;">
                     <div class="stat-value"><?php echo number_format($stats['today_uploads']); ?></div>
-                    <div class="stat-label">Uploaded Today</div>
-                    <i class="fas fa-upload stat-icon"></i>
+                    <div class="stat-label" style ="color: #28a745;">Uploaded Today</div>
+                    <i class="fas fa-upload stat-icon" style="color: #28a745;"></i>
                 </div>
-                <div class="stat-card warning">
+                <div class="stat-card warning" style="color: #ccc4acff;">
                     <div class="stat-value"><?php echo number_format($stats['week_uploads']); ?></div>
-                    <div class="stat-label">This Week</div>
-                    <i class="fas fa-calendar-week stat-icon"></i>
+                    <div class="stat-label" style="color: #ffc107;">This Week</div>
+                    <i class="fas fa-calendar-week stat-icon" style="color: #ffc107;"></i>
                 </div>
-                <div class="stat-card info">
+                <div class="stat-card info" style="color: #accbcfff;">
                     <div class="stat-value"><?php echo formatFileSize($stats['total_size'] ?? 0); ?></div>
-                    <div class="stat-label">Total Storage</div>
-                    <i class="fas fa-hdd stat-icon"></i>
+                    <div class="stat-label" style="color: #17a2b8;">Total Storage</div>
+                    <i class="fas fa-hdd stat-icon" style="color: #17a2b8;"></i>
                 </div>
-                <div class="stat-card dark">
+                <div class="stat-card dark" style="color: #9aacc0ff;">
                     <div class="stat-value"><?php echo number_format($stats['unique_uploaders']); ?></div>
-                    <div class="stat-label">Active Users</div>
-                    <i class="fas fa-users stat-icon"></i>
+                    <div class="stat-label" style = "color: #007bff;">Active Users</div>
+                    <i class="fas fa-users stat-icon" style="color: #007bff;"></i>
                 </div>
             </div>
 
@@ -631,8 +1338,7 @@ function timeAgo($datetime) {
                 </div>
             <?php endif; ?>
 
-            <!-- Enhanced Filters -->
-            <div class="card enhanced-filter-card">
+            <div class="card filter-card">
                 <div class="card-body">
                     <form method="GET" class="row g-3">
                         <div class="col-lg-3 col-md-6">
@@ -699,8 +1405,7 @@ function timeAgo($datetime) {
                 </div>
             </div>
 
-            <!-- Enhanced Files Table -->
-            <div class="card enhanced-files-table">
+            <div class="card files-table">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead>
@@ -718,7 +1423,7 @@ function timeAgo($datetime) {
                                 <tr>
                                     <td>
                                         <div class="file-item">
-                                            <div class="file-icon-enhanced <?php echo getFileIconClass($file['file_extension'] ?? ''); ?>">
+                                            <div class="file-icon <?php echo getFileIconClass($file['file_extension'] ?? ''); ?>">
                                                 <?php
                                                 $icon = 'fa-file';
                                                 switch(getFileIconClass($file['file_extension'] ?? '')) {
@@ -798,7 +1503,7 @@ function timeAgo($datetime) {
                                     <td>
                                         <?php if ($file['department_name']): ?>
                                             <div class="text-center">
-                                                <span class="badge badge-enhanced badge-department">
+                                                <span class="badge badge badge-department">
                                                     <?php echo htmlspecialchars($file['department_code']); ?>
                                                 </span>
                                                 <small class="d-block text-muted mt-1">
@@ -821,7 +1526,7 @@ function timeAgo($datetime) {
                                         </small>
                                     </td>
                                     <td class="text-center">
-                                        <span class="badge badge-enhanced <?php echo $file['is_public'] ? 'badge-public' : 'badge-private'; ?>">
+                                        <span class="badge badge <?php echo $file['is_public'] ? 'badge-public' : 'badge-private'; ?>">
                                             <i class="fas <?php echo $file['is_public'] ? 'fa-globe' : 'fa-lock'; ?> me-1"></i>
                                             <?php echo $file['is_public'] ? 'Public' : 'Private'; ?>
                                         </span>
@@ -886,14 +1591,12 @@ function timeAgo($datetime) {
                 </div>
             </div>
 
-            <!-- Enhanced Pagination -->
             <?php if ($total_pages > 1): ?>
                 <div class="d-flex justify-content-between align-items-center mt-4">
                     <div class="text-muted">
                         Showing <?php echo $offset + 1; ?>-<?php echo min($offset + $limit, $total_files); ?> 
                         of <?php echo number_format($total_files); ?> files
                     </div>
-                    <nav>
                         <ul class="pagination mb-0">
                             <?php
                             $current_url = $_SERVER['REQUEST_URI'];
@@ -954,8 +1657,7 @@ function timeAgo($datetime) {
                                 </li>
                             <?php endif; ?>
                         </ul>
-                    </nav>
-                </div>
+                 </div>
             <?php endif; ?>
             
             <!-- Quick Actions Panel -->
@@ -1011,7 +1713,7 @@ function timeAgo($datetime) {
                                 <i class="fas fa-tools me-2"></i>Quick Actions
                             </h6>
                             <div class="d-grid gap-2">
-                                <button class="btn btn-outline-primary btn-sm" onclick="exportFileReport()">
+                                <button class="btn btn-outline-secondary btn-sm" onclick="exportFileReport()">
                                     <i class="fas fa-file-export me-1"></i>Export Report
                                 </button>
                                 <button class="btn btn-outline-secondary btn-sm" onclick="bulkActions()">
@@ -1056,7 +1758,6 @@ function timeAgo($datetime) {
             }
         });
         
-        // Enhanced functionality
         function exportFileReport() {
             // This would typically send an AJAX request to generate a report
             alert('Export functionality would be implemented here');
