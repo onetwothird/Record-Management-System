@@ -4,6 +4,7 @@ require_once dirname(__DIR__, 2) . '/includes/config.php';
 
 // Google OAuth Configuration
 
+
 class GoogleOAuth {
     
     public static function getAuthUrl() {
