@@ -365,12 +365,17 @@ function timeAgo($datetime) {
             --gray-800: #1e293b;
             --gray-900: #0f172a;
             
-            /* Shadows */
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-
+            --light: #F9F9F9;
+            --green: #28a745;
+            --light-green: #cfffef;
+            --grey: #eee;
+            --dark-grey: #AAAAAA;
+            --dark: #342E37;
+            --red: #DB504A;
+            --yellow: #FFCE26;
+            --light-yellow: #FFF2C6;
+            --orange: #FD7238;
+            --light-orange: #FFE0D3;
         }
 
         * {
@@ -384,7 +389,60 @@ function timeAgo($datetime) {
             font-family: var(--poppins);
             overflow-x: hidden;
             min-height: 100vh;
-        }
+                }
+
+            #content main {
+                width: 100%;
+                padding: 36px 24px;
+                font-family: var(--poppins);
+                max-height: calc(100vh - 56px);
+                overflow-y: auto;
+            }
+            #content main .head-title {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                grid-gap: 16px;
+                flex-wrap: wrap;
+            }
+            #content main .head-title .left h1 {
+                font-size: 36px;
+                font-weight: 600;
+                margin-bottom: 10px;
+                color: var(--dark);
+            }
+            #content main .head-title .left .breadcrumb {
+                display: flex;
+                align-items: center;
+                grid-gap: 16px;
+            }
+            #content main .head-title .left .breadcrumb li {
+                color: var(--dark);
+            }
+            #content main .head-title .left .breadcrumb li a {
+                color: var(--dark-grey);
+                pointer-events: none;
+                text-decoration: none; /* removes underline */
+            }
+
+            #content main .head-title .left .breadcrumb li a.active {
+                color: var(--green);
+                pointer-events: unset;
+                text-decoration: none; /* also removes underline on active */
+            }
+            #content main .head-title .btn-download {
+                height: 36px;
+                padding: 0 16px;
+                border-radius: 36px;
+                background: var(--green);
+                color: var(--light);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                grid-gap: 10px;
+                font-weight: 500;
+            }
+
 
         .files-container {
             padding: 30px;
@@ -1247,9 +1305,9 @@ function timeAgo($datetime) {
             border-radius: 15px;
             font-weight: 600;
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
             transform: translateX(400px);
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            backdrop-filter: blur(10px);
         }
 
         .notification.show {
@@ -1277,20 +1335,16 @@ function timeAgo($datetime) {
     <section id="content">
         <!-- Navbar Component -->
         <?php include 'components/navbar.html'; ?>
-    
-        <div class="files-container" id="files-container">
-            <!-- Header -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2 class="mb-1">
-                        <i class="fas fa-files me-2"></i>File Management
-                    </h2>
-                    <p class="text-muted mb-0">
-                        <?php echo $admin_role === 'super_admin' ? 'System-wide file overview' : 'Department files under your supervision'; ?>
-                    </p>
-                </div>
-                <div class="badge badge badge-department fs-6">
-                    <?php echo number_format($total_files); ?> total files
+        
+        <main>
+            <div class="head-title">
+                <div class="left">
+                    <h1>File Management</h1>
+                    <ul class="breadcrumb">
+                        <li><a href="dashboard.php">Admin</li>
+                        <li><i class='bx bx-chevron-right'></i></li>
+                        <li><a class="active" href="">All Files</a></li>
+                    </ul>
                 </div>
             </div>
 
